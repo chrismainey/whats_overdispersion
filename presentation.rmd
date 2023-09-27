@@ -1,0 +1,244 @@
+---
+title: "Overdispersion"
+author: 
+  - "Chris Mainey"
+date: '`r Sys.Date()`'
+output:
+  xaringan::moon_reader:
+    seal: false
+    css: theme.css
+    nature:
+      slideNumberFormat: "%current%"
+      highlightStyle: github
+      highlightLines: true
+      ratio: 16:9
+      countIncrementalSlides: false
+---
+
+```{r setup, include=FALSE}
+library(ragg)
+library(tidyverse)
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(
+  fig.width=9, fig.height=3.5, fig.retina=3,
+  out.width = "100%",
+  cache = FALSE,
+  echo = TRUE,
+  message = FALSE, 
+  warning = FALSE,
+  hiline = TRUE,
+  dev = "ragg_png"
+)
+
+# Set up
+showtext::showtext_auto()
+sysfonts::font_add_google("Open Sans", "Open Sans")
+
+# ggplot defaults
+theme_set(
+  theme_classic(base_family = "Open Sans") +
+    theme(
+      axis.title = element_text(family="Open Sans"),
+      panel.background = element_blank(),
+      panel.grid = element_blank(),
+      axis.line = element_line(colour ="#425563"),
+      strip.background = element_rect(fill = "#c8cfd3"),
+      plot.title = element_text(face = "bold", size = 16),
+      plot.subtitle = element_text(face = "italic", size = 10)
+    )
+)
+
+library(readr)
+library(tidyverse)
+library(FunnelPlotR)
+library(scales)
+
+readmissions <- read_csv("I02040 Compendium Readmissions Dataset (Main) 2022(10).csv")
+
+unique(readmissions$`Period of coverage`)
+unique(readmissions$Level)
+
+sub<- readmissions %>%
+  filter(`Period of coverage` == "01/04/2021 to 31/03/2022" &
+           substring(Level,1,1) == "R" &
+           `Sex Breakdown` == "Persons") %>%
+  mutate(Numerator = as.numeric(ifelse(Numerator == "*", floor(Expected), Numerator)))
+
+```
+
+
+class: title-slide
+
+# Modelling count data:
+## What is overdispersion, and why you should care about it
+
+
+
+<br><br><br><br><br>
+
+### <img src="./assets/img/crop.png" alt="Mainard icon" height="40px" />  Dr Chris Mainey
+<br><br>
+
+`r icons::icon_style(icons::fontawesome("envelope"), fill = "#005EB8")` [c.mainey@nhs.net](mailto:c.mainey@nhs.net)
+`r icons::icon_style(icons::fontawesome("twitter"), fill = "#005EB8")` [@chrismainey](https://twitter.com/chrismainey)
+`r icons::icon_style(icons::fontawesome("github"), fill = "#005EB8")` [chrismainey](https://github.com/chrismainey)
+`r icons::icon_style(icons::fontawesome("linkedin"), fill = "#005EB8")`  [chrismainey](https://www.linkedin.com/in/chrismainey/)
+`r icons::icon_style(icons::fontawesome("orcid"), fill = "#005EB8")` [0000-0002-3018-6171](https://orcid.org/0000-0002-3018-6171)
+`r icons::icon_style(icons::fontawesome("globe"), fill = "#005EB8")` [www.mainard.co.uk](https://www.mainard.co.uk)
+
+.footnote[Presentation and code available: **https://github.com/chrismainey/BSICB_interview**]
+
+.art_cap[R generative art - inspired by Antonio Sánchez Chinchón - @aschinchon]
+
+
+
+
+---
+
+# Count data
+
+--
+
+Rabe-Hesketh & Skondral (2012) suggest that 
+
+>“Counts can be thought of as aggregated versions or summaries of more detailed data on the occurrences of some event.” 
+
+Two common sources (Cameron and Trivedi, 2013e):
++  observation of point processes
++  discretization of continuous outcomes 
+
+--
+
+Several properties:
+
++ Natural, whole numbers (integers), sometimes referred to as ‘discrete.’ E.g. counts of 2 or 3 are possible, but 2.5 is not.
+
++ Range from zero to infinity, with counts less than zero impossible
+
++ Counts occur in a fixed time period, with a known average rate (𝜇)
+  + counts that occur with a variable time period can be characterised as rates using a time denominator
+
++ Not normally distributed: Poisson.
+  + Counts with low average rates are noticeable skewed
+  + Asymptotically normally distributed when average rate is high
+
+
+---
+# Assumptions...
+
++ Even if you don't know you are doing it, using counts are simple Poisson models:
+  + Characterised by it's average rate
+  
++ Same holds for proportions/ratio which are commonly truncated Poisson distributions
+
++ Poisson assumptions commonly violated in, real world data (Breslow 184)
+
+---
+# Example: Hospital Readmissions
+
+```{r nolimits}
+# No limits
+sub %>%
+  group_by(Level, Trust=`Level description`) %>%
+  summarise(Numerator = sum(Numerator),
+            Expected = sum(Expected)) %>%
+  # ggplot(aes(y=Numerator/Expected, x = Expected))+
+  # geom_point() +
+  # geom_hline(yintercept = 1, colour = "red")+
+  # scale_y_continuous("Indirectly Standardised Readmission Ratio")+
+  # scale_x_continuous(labels = comma)+
+  funnel_plot(Numerator,Expected, Trust, data_type = "SR"
+              , draw_adjusted = FALSE
+              , draw_unadjusted = FALSE
+             , title = "Readmissions 2021/22")
+
+```
+
+source: NHS
+
+---
+class: centre
+# Methods to deal with overdispersion
+
+---
+
+# 1. Ignore it...
+
+Yes...that is an option....
+
+--
+
+Depends on what you are trying to do:
+
++ Poisson or Binomial model estimates are unbiased
+
++ Error will be wrong, but if using for prediction, it matters less.
+
+---
+
+# 2. Get more information...
+
+Major causes of overdispersion are due to Poisson/Binomial models 
+
+---
+
+# 3. Characterise the variance better
+
+Can apply computation methods to improve the accuracy, such as:
+
++ Boostrapping (Efron, 1979): taking random samples of you data and iteratively refitting, averaging across.
++ Scale the variance in a model
++ Scale the variance 'post-hoc' (after calculation) 
++ Use mixture models
++ Model known heirerachy e.g. clustering at trust level with random-intercept.
+
+
+---
+
+# 3a. Scaling the variance: quasi-models
+
+---
+
+# 3b. Mixture models
+
+Negative Binomial
+
+
+Generalised Poisson
+
+Conway-Maxwell Poisson
+
+---
+
+---
+# Common objections
+
+> It's quite complicated.
+
+Yes, it can be.  Main point is that your model is likely being too optimistic about it's error and you will be falsley assured of something by using it.
+
+> We prefer the normal limits, as we don't want to miss anything
+
+You can do, but your false positives are high.
+
+> Doesn't look like much of a funnel anymore
+
+This is because the additive overdispersion component is very large and dominating the new control limit.  This is exactly _why_ you need to account for it.
+
+> Isn't it just picking how many outliers I want?
+
+Well...sort of... yes.  If you have outliers, you investigate them first before changing the system.
+
+> We can't tell which OD- adjustment method to chose...
+
+Welcome to the wonderful world of Statistics. It's all shades of grey...
+
+---
+
+# Conclusions
+
++ We model and use count data all the time in healthcare analytics: even counting binary events.
+
++ Default assumptions for count data relate to Poisson and Binomial distributions, but these distributions have a very fixed expectation of the variance.
+
++ Real-world data is never as perfect as these distributions assume, so you usually underestimate the variance in your model, known as ___overdispersion___
