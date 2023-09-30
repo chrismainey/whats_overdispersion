@@ -120,6 +120,17 @@ h1, h2, h3 {
   font-size: 0.9rem;
 }
 
+.cite{
+  font-size: 0.8rem;
+   line-height: 25px;
+
+}
+
+.reference{
+  font-size: 0.5rem;
+  line-height: 20px;
+}
+
 strong {
   font-weight: bold;
   color: var(--text-bold-color);
@@ -141,7 +152,7 @@ a, a > code {
 .inverse {
   background-color: var(--inverse-background-color);
   color: var(--inverse-text-color);
-  
+
 }
 .inverse h1, .inverse h2, .inverse h3 {
   color: var(--inverse-header-color);
@@ -176,7 +187,7 @@ a, a > code {
   background-color: var(--title-slide-background-color);
   background-image: url("./assets/img/artsy.png");
   background-size: 35%;
-  background-position: right 8% bottom 60%;
+  background-position: right 8% bottom 50%;
   /*background-clip: content-box;*/
 }
 
@@ -184,19 +195,19 @@ a, a > code {
   padding:0;
   margin:0;
 }
-  
+
 .title-slide .remark-slide-number {
   display: none;
 }
 
 .art_cap {
   position: absolute;
-  bottom: 25%;
+  bottom: 20%;
   right: 8%;
   padding-right: 4em;
   font-size: 0.5em;
   font-style: italic;
-  
+
 }
 
 .references p {
@@ -236,7 +247,7 @@ a, a > code {
 .pull-right {
   float: right;
   width: 47%;
-  
+
 }
 .pull-right-half {
   float: right;

@@ -4,8 +4,10 @@
     <title>Overdispersion</title>
     <meta charset="utf-8" />
     <meta name="author" content="Chris Mainey" />
-    <meta name="date" content="2023-09-27" />
+    <meta name="date" content="2023-09-30" />
     <script src="presentation_files/header-attrs/header-attrs.js"></script>
+    <script src="presentation_files/kePrint/kePrint.js"></script>
+    <link href="presentation_files/lightable/lightable.css" rel="stylesheet" />
     <link rel="stylesheet" href="theme.css" type="text/css" />
   </head>
   <body>
@@ -18,11 +20,11 @@
 class: title-slide
 
 # Modelling count data:
-## What is overdispersion, and why you should care about it
+## What is overdispersion, and why should you care about it?
 
 
 
-&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;
+&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;
 
 ### &lt;img src="./assets/img/crop.png" alt="Mainard icon" height="40px" /&gt;  Dr Chris Mainey
 &lt;br&gt;&lt;br&gt;
@@ -34,9 +36,9 @@ class: title-slide
 &lt;svg viewBox="0 0 512 512" style="height:1em;position:relative;display:inline-block;top:.1em;fill:#005EB8;" xmlns="http://www.w3.org/2000/svg"&gt;  &lt;path d="M294.75 188.19h-45.92V342h47.47c67.62 0 83.12-51.34 83.12-76.91 0-41.64-26.54-76.9-84.67-76.9zM256 8C119 8 8 119 8 256s111 248 248 248 248-111 248-248S393 8 256 8zm-80.79 360.76h-29.84v-207.5h29.84zm-14.92-231.14a19.57 19.57 0 1 1 19.57-19.57 19.64 19.64 0 0 1-19.57 19.57zM300 369h-81V161.26h80.6c76.73 0 110.44 54.83 110.44 103.85C410 318.39 368.38 369 300 369z"&gt;&lt;/path&gt;&lt;/svg&gt; [0000-0002-3018-6171](https://orcid.org/0000-0002-3018-6171)
 &lt;svg viewBox="0 0 496 512" style="height:1em;position:relative;display:inline-block;top:.1em;fill:#005EB8;" xmlns="http://www.w3.org/2000/svg"&gt;  &lt;path d="M336.5 160C322 70.7 287.8 8 248 8s-74 62.7-88.5 152h177zM152 256c0 22.2 1.2 43.5 3.3 64h185.3c2.1-20.5 3.3-41.8 3.3-64s-1.2-43.5-3.3-64H155.3c-2.1 20.5-3.3 41.8-3.3 64zm324.7-96c-28.6-67.9-86.5-120.4-158-141.6 24.4 33.8 41.2 84.7 50 141.6h108zM177.2 18.4C105.8 39.6 47.8 92.1 19.3 160h108c8.7-56.9 25.5-107.8 49.9-141.6zM487.4 192H372.7c2.1 21 3.3 42.5 3.3 64s-1.2 43-3.3 64h114.6c5.5-20.5 8.6-41.8 8.6-64s-3.1-43.5-8.5-64zM120 256c0-21.5 1.2-43 3.3-64H8.6C3.2 212.5 0 233.8 0 256s3.2 43.5 8.6 64h114.6c-2-21-3.2-42.5-3.2-64zm39.5 96c14.5 89.3 48.7 152 88.5 152s74-62.7 88.5-152h-177zm159.3 141.6c71.4-21.2 129.4-73.7 158-141.6h-108c-8.8 56.9-25.6 107.8-50 141.6zM19.3 352c28.6 67.9 86.5 120.4 158 141.6-24.4-33.8-41.2-84.7-50-141.6h-108z"&gt;&lt;/path&gt;&lt;/svg&gt; [www.mainard.co.uk](https://www.mainard.co.uk)
 
-.footnote[Presentation and code available: **https://github.com/chrismainey/BSICB_interview**]
+.footnote[Presentation and code available: **https://github.com/chrismainey/whats_overdispersion**]
 
-.art_cap[R generative art - inspired by Antonio SÃ¡nchez ChinchÃ³n - @aschinchon]
+.art_cap[R generative art - inspired by Antonio Sánchez Chinchón - @aschinchon]
 
 
 
@@ -47,17 +49,19 @@ class: title-slide
 
 --
 
-Rabe-Hesketh &amp; Skondral (2012) suggest that 
+ suggest that 
 
 &gt;“Counts can be thought of as aggregated versions or summaries of more detailed data on the occurrences of some event.” 
 
-Two common sources (Cameron and Trivedi, 2013e):
+&lt;a id='cite-rabe-hesketh_multilevel_2012'&gt;&lt;/a&gt;(&lt;a href='#bib-rabe-hesketh_multilevel_2012'&gt;Rabe-Hesketh and Skrondal, 2012&lt;/a&gt;)
+
+__Two common sources__ &lt;a id='cite-cameron_regression_2013'&gt;&lt;/a&gt;(&lt;a href='#bib-cameron_regression_2013'&gt;Cameron and Trivedi, 2013&lt;/a&gt;):
 +  observation of point processes
 +  discretization of continuous outcomes 
 
 --
 
-Several properties:
+__Several properties:__
 
 + Natural, whole numbers (integers), sometimes referred to as ‘discrete.’ E.g. counts of 2 or 3 are possible, but 2.5 is not.
 
@@ -66,10 +70,25 @@ Several properties:
 + Counts occur in a fixed time period, with a known average rate (𝜇)
   + counts that occur with a variable time period can be characterised as rates using a time denominator
 
-+ Not normally distributed: Poisson.
++ Not normally distributed!
+
+---
+# Count data distributions: 
+
+.pull-left[
++ Default description is the Poisson distribution &lt;a id='cite-poisson_recherches_1837'&gt;&lt;/a&gt;(&lt;a href='#bib-poisson_recherches_1837'&gt;Poisson, 1837&lt;/a&gt;; &lt;a href='#bib-cameron_regression_2013'&gt;Cameron and Trivedi, 2013&lt;/a&gt;).
+  + Not defined between integers
   + Counts with low average rates are noticeable skewed
   + Asymptotically normally distributed when average rate is high
+  + Single parameter `\(\lambda\)` is both mean and variance
+  + Similar principle for binomial distribution, where variance: `\(np(1-p)\)` is fixed by mean: `\(np\)`
+  + No free parameter to scale with the variance.
+  + Result is set variance that cannot alter in relation to data
+]
 
+.pull-right[
+&lt;img src="presentation_files/figure-html/poisondistributions-1.png" width="100%" /&gt;
+]
 
 ---
 # Assumptions...
@@ -79,41 +98,30 @@ Several properties:
   
 + Same holds for proportions/ratio which are commonly truncated Poisson distributions
 
-+ Poisson assumptions commonly violated in, real world data (Breslow 184)
++ Poisson assumptions commonly violated in, real world data &lt;a id='cite-breslow_extra-poisson_1984'&gt;&lt;/a&gt;(&lt;a href='https://doi.org/10.2307/2347661'&gt;Breslow, 1984&lt;/a&gt;)
 
 ---
 # Example: Hospital Readmissions
 
+&lt;img src="presentation_files/figure-html/nolimits-1.png" width="100%" /&gt;
+source: [NHS Digital](https://digital.nhs.uk/data-and-information/publications/statistical/compendium-emergency-readmissions/current/specifications/emergency-readmissions-within-30-days-of-discharge-from-hospital_3#top)
+
+
+__Dispersion Ratio of 86.40!__
+Error is actually 86 times larger than our simple models would assume.
+---
+class: middle
+# Methods to deal with overdispersion
+
+
+_well, we need to be able to test for it first..._
 
 ```r
-# No limits
-sub %&gt;%
-  group_by(Level, Trust=`Level description`) %&gt;%
-  summarise(Numerator = sum(Numerator),
-            Expected = sum(Expected)) %&gt;%
-  # ggplot(aes(y=Numerator/Expected, x = Expected))+
-  # geom_point() +
-  # geom_hline(yintercept = 1, colour = "red")+
-  # scale_y_continuous("Indirectly Standardised Readmission Ratio")+
-  # scale_x_continuous(labels = comma)+
-  funnel_plot(Numerator,Expected, Trust, data_type = "SR"
-              , draw_adjusted = FALSE
-              , draw_unadjusted = FALSE
-             , title = "Readmissions 2021/22")
+# overdispersion test
+od_test&lt;-function(model, ...){
+  sum(residuals(model, type="pearson")^2) / df.residual(model)
+}
 ```
-
-&lt;img src="presentation_files/figure-html/nolimits-1.png" width="100%" /&gt;
-
-```
-## A funnel plot object with 177 points of which 0 are outliers. 
-## Plot is not adjusted for overdispersion.
-```
-
-source: NHS
-
----
-class: centre
-# Methods to deal with overdispersion
 
 ---
 
@@ -133,7 +141,19 @@ Depends on what you are trying to do:
 
 # 2. Get more information...
 
-Major causes of overdispersion are due to Poisson/Binomial models 
+Major causes of overdispersion are due to Poisson/Binomial models assumptions of the variance.
+
+If you can characterise it better, overdispersion should be lower:
+
+___Could examine:___
+
++ __Outliers:__  are there data points that are incorrect, incorrectly measured, from a different distribution?
+
++ __Aggregation:__ aggregating loses detail, can you alter the aggregation to add more detail to a model?
+
++ __Missing parameters:__ Is there more data that could help explain the variation?
+
++ __Poorly specified model components:__ Check whether we parametrise the predictors appropriately: e.g age, age categories, spline of age
 
 ---
 
@@ -141,53 +161,406 @@ Major causes of overdispersion are due to Poisson/Binomial models
 
 Can apply computation methods to improve the accuracy, such as:
 
-+ Boostrapping: taking random samples of you data and iteratively refitting, averaging across.
++ Bootstrapping &lt;a id='cite-efron_bootstrap_1979'&gt;&lt;/a&gt;(&lt;a href='https://doi.org/10.1214/aos/1176344552'&gt;Efron, 1979&lt;/a&gt;): taking random samples of you data and iteratively refitting, averaging across.
++ Scale the variance in a model
++ Scale the variance 'post-hoc' (after calculation) 
++ Use mixture models
++ Model known hierarchy e.g. clustering at trust level with random-intercept.
 
-+ Cross-validation: split the data into
 
-+ 'Profiled' confidence intervals
+
+```r
+library(COUNT)
+library(AER)
+data("medpar")
+base_model &lt;- glm(los ~ hmo + died +  factor(type), data=medpar, family="poisson")
+od_test(base_model)
+```
+
+```
+## [1] 6.241336
+```
+---
+
+# Model output:
+
+
+```r
+mod_summary(base_model)
+```
+
+&lt;table class="table" style="margin-left: auto; margin-right: auto;"&gt;
+ &lt;thead&gt;
+&lt;tr&gt;
+&lt;th style="empty-cells: hide;border-bottom:hidden;" colspan="4"&gt;&lt;/th&gt;
+&lt;th style="border-bottom:hidden;padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center; " colspan="2"&gt;&lt;div style="border-bottom: 1px solid #ddd; padding-bottom: 5px; "&gt;Confidence Interval&lt;/div&gt;&lt;/th&gt;
+&lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:center;font-weight: bold;"&gt; Term &lt;/th&gt;
+   &lt;th style="text-align:center;font-weight: bold;"&gt; Estimate &lt;/th&gt;
+   &lt;th style="text-align:center;font-weight: bold;"&gt; Standard Error &lt;/th&gt;
+   &lt;th style="text-align:center;font-weight: bold;"&gt; p-value &lt;/th&gt;
+   &lt;th style="text-align:center;font-weight: bold;"&gt; Lower &lt;/th&gt;
+   &lt;th style="text-align:center;font-weight: bold;"&gt; Upper &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;"&gt; (Intercept) &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 9.63 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.01 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 9.41 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 9.85 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;"&gt; hmo &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.93 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.02 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.88 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.97 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;"&gt; died &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.78 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.02 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.75 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.81 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;"&gt; factor(type)2 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 1.28 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.02 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 1.23 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 1.34 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;"&gt; factor(type)3 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 2.12 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.03 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 2.01 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 2.23 &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+### Keep an eye on those confidence intervals...
 
 ---
 
-# 3. Scale the variance in some way
+# 3a. Scaling the variance: 'Robust' confidence intervals
+'Sandwich' estimators can be use to scale the standard error, e.g. `sandwich` package
 
+
+```r
+library("sandwich")
+library("lmtest")
+
+tidy(coeftest(base_model, vcov = sandwich), conf.int = TRUE) 
+```
+
+&lt;table class="table" style="margin-left: auto; margin-right: auto;"&gt;
+ &lt;thead&gt;
+&lt;tr&gt;
+&lt;th style="empty-cells: hide;border-bottom:hidden;" colspan="4"&gt;&lt;/th&gt;
+&lt;th style="border-bottom:hidden;padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center; " colspan="2"&gt;&lt;div style="border-bottom: 1px solid #ddd; padding-bottom: 5px; "&gt;Confidence Interval&lt;/div&gt;&lt;/th&gt;
+&lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:center;font-weight: bold;"&gt; Term &lt;/th&gt;
+   &lt;th style="text-align:center;font-weight: bold;"&gt; Estimate &lt;/th&gt;
+   &lt;th style="text-align:center;font-weight: bold;"&gt; Standard Error &lt;/th&gt;
+   &lt;th style="text-align:center;font-weight: bold;"&gt; p-value &lt;/th&gt;
+   &lt;th style="text-align:center;font-weight: bold;"&gt; Lower &lt;/th&gt;
+   &lt;th style="text-align:center;font-weight: bold;"&gt; Upper &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;"&gt; (Intercept) &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 9.63 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 1.03 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 1.00 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 9.15 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 10.13 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;"&gt; hmo &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.93 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 1.05 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 1.15 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.84 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 1.03 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;"&gt; died &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.78 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 1.05 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 1.00 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.70 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.86 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;"&gt; factor(type)2 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 1.28 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 1.05 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 1.00 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 1.16 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 1.42 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;"&gt; factor(type)3 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 2.12 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 1.12 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 1.00 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 1.69 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 2.66 &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
 
 ---
+# 3b scaleing variance: Quasi-likehood
++ More relaxed assumption allowing scaling.
++ Estimated with GEE instead of MLE, but lacks MLE for AIC of likelihood ratio tests
 
-# 3a. Quasi-models
+
+```r
+quasi_model &lt;- glm(los ~ hmo + died +  factor(type), data=medpar, family="quasipoisson")
+od_test(quasi_model)
+```
+
+```
+## [1] 6.241336
+```
+
+```r
+mod_summary(quasi_model)
+```
+
+&lt;table class="table" style="margin-left: auto; margin-right: auto;"&gt;
+ &lt;thead&gt;
+&lt;tr&gt;
+&lt;th style="empty-cells: hide;border-bottom:hidden;" colspan="4"&gt;&lt;/th&gt;
+&lt;th style="border-bottom:hidden;padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center; " colspan="2"&gt;&lt;div style="border-bottom: 1px solid #ddd; padding-bottom: 5px; "&gt;Confidence Interval&lt;/div&gt;&lt;/th&gt;
+&lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:center;font-weight: bold;"&gt; Term &lt;/th&gt;
+   &lt;th style="text-align:center;font-weight: bold;"&gt; Estimate &lt;/th&gt;
+   &lt;th style="text-align:center;font-weight: bold;"&gt; Standard Error &lt;/th&gt;
+   &lt;th style="text-align:center;font-weight: bold;"&gt; p-value &lt;/th&gt;
+   &lt;th style="text-align:center;font-weight: bold;"&gt; Lower &lt;/th&gt;
+   &lt;th style="text-align:center;font-weight: bold;"&gt; Upper &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;"&gt; (Intercept) &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 9.63 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.03 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.00 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 9.08 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 10.20 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;"&gt; hmo &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.93 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.06 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.21 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.82 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 1.04 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;"&gt; died &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.78 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.05 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.00 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.71 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.85 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;"&gt; factor(type)2 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 1.28 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.05 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.00 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 1.16 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 1.42 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;"&gt; factor(type)3 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 2.12 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.07 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.00 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 1.86 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 2.40 &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
 
 ---
 
 # 3b. Mixture models
 
-Negative Binomial
++ We can use mixed distributions that allow us to retain Poisson but add another assumption in.
+
++ ___Negative Binomial___ &lt;a id='cite-hilbe2011negative'&gt;&lt;/a&gt;(&lt;a href='https://books.google.co.uk/books?id=DDxEGQuqkJoC'&gt;Hilbe, 2011&lt;/a&gt;) Can be used as Poisson with addition gamma or normal distributed assumption (more on this with random effect...)
 
 
-Generalised Poisson
+```r
+library(MASS)
+nb_model &lt;- glm.nb(los ~ hmo + died +  factor(type), data=medpar)
+od_test(nb_model)
+```
 
-Conway-Maxwell Poisson
+```
+## [1] 1.133281
+```
+
+
+```r
+mod_summary(nb_model)
+```
+
+&lt;table class="table" style="margin-left: auto; margin-right: auto;"&gt;
+ &lt;thead&gt;
+&lt;tr&gt;
+&lt;th style="empty-cells: hide;border-bottom:hidden;" colspan="4"&gt;&lt;/th&gt;
+&lt;th style="border-bottom:hidden;padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center; " colspan="2"&gt;&lt;div style="border-bottom: 1px solid #ddd; padding-bottom: 5px; "&gt;Confidence Interval&lt;/div&gt;&lt;/th&gt;
+&lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:center;font-weight: bold;"&gt; Term &lt;/th&gt;
+   &lt;th style="text-align:center;font-weight: bold;"&gt; Estimate &lt;/th&gt;
+   &lt;th style="text-align:center;font-weight: bold;"&gt; Standard Error &lt;/th&gt;
+   &lt;th style="text-align:center;font-weight: bold;"&gt; p-value &lt;/th&gt;
+   &lt;th style="text-align:center;font-weight: bold;"&gt; Lower &lt;/th&gt;
+   &lt;th style="text-align:center;font-weight: bold;"&gt; Upper &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;"&gt; (Intercept) &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 9.59 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.03 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.00 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 9.10 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 10.12 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;"&gt; hmo &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.93 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.05 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.18 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.84 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 1.03 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;"&gt; died &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.79 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.04 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.00 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.73 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.85 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;"&gt; factor(type)2 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 1.29 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.05 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.00 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 1.17 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 1.42 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;"&gt; factor(type)3 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 2.09 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.08 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.00 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 1.81 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 2.43 &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
 
 ---
 
+# Multi-level models
+&lt;a id='cite-goldstein_multilevel_2010'&gt;&lt;/a&gt;(&lt;a href='#bib-goldstein_multilevel_2010'&gt;Goldstein, 2010&lt;/a&gt;)
+
++ Sometimes we can't estimate the variance because it operates on more than one level.
++ We can adapt regressions to have both 'fixed-effects' (coefficient and variance) or random-effect (variance)
+
+--
+
+&lt;br&gt;&lt;br&gt;
+## Hospital-level clustering
+
++ Regression makes assumption of independence, which is violated if there is clustering
++ E.g. are all patients unrelated, or are the patients of a particular organisations related?
++ Multiple samples at the same units (repeated measurements) is a similar concept: not independent.
++ We can allow a 'random-intercept' or cluster-specific mean, as well as a global intercept.
+
+As example, using readmissions from earlier (but not working):
+
+```r
+library(lme4)
+random_int_model &lt;- glmer(Numerator ~ (1|Level) + offset(log(Denominator)), data=sub2, family="poisson")
+```
+
+---
+
+# Random-intercept model
+
+
+```r
+library(sjPlot)
+plot_model(random_int_model, type="re")
+```
+
+&lt;img src="presentation_files/figure-html/sjp-1.png" width="100%" /&gt;
+---
+
+# Post-hoc adjustment
+
++ Based on meta-analysis of trials &lt;a id='cite-dersimonian_meta-analysis_1986'&gt;&lt;/a&gt;(&lt;a href='https://doi.org/10.1016/0197-2456(86)90046-2'&gt;DerSimonian and Laird, 1986&lt;/a&gt;)
++ Spiegelhalter showed how to apply them in hospital indicator context, including funnel plots  &lt;a id='cite-spiegelhalter_statistical_2012'&gt;&lt;/a&gt;&lt;a id='cite-spiegelhalterHandlingOverdispersionPerformance2005'&gt;&lt;/a&gt;(&lt;a href='https://doi.org/10.1111/j.1467-985x.2011.01010.x'&gt;Spiegelhalter Sherlaw-Johnson et al., 2012&lt;/a&gt;; &lt;a href='https://doi.org/10.1136/qshc.2005.013755'&gt;Spiegelhalter, 2005&lt;/a&gt;)
++ Essentially estimating the dispersion ratio and scaling based on it, the number of clusters and within-cluster variance.
++ Same assumption, and equivalent to random-intercept model
+
+
+### Taking the readmissions from the start:
+
+.pull-left[
+&lt;img src="presentation_files/figure-html/funnelundjust-1.png" width="100%" /&gt;
+]
+.pull-right[
+&lt;img src="presentation_files/figure-html/funneladjust-1.png" width="100%" /&gt;
+]
 ---
 # Common objections
 
+--
 &gt; It's quite complicated.
 
-Yes, it can be.  Main point is that your model is likely being too optimistic about it's error and you will be falsley assured of something by using it.
+Yes, it can be.  Main point is that your model is likely being too optimistic about it's error and you will be falsely assured of something by using it.
 
+--
 &gt; We prefer the normal limits, as we don't want to miss anything
 
 You can do, but your false positives are high.
 
+--
 &gt; Doesn't look like much of a funnel anymore
 
 This is because the additive overdispersion component is very large and dominating the new control limit.  This is exactly _why_ you need to account for it.
 
+--
 &gt; Isn't it just picking how many outliers I want?
 
 Well...sort of... yes.  If you have outliers, you investigate them first before changing the system.
 
+--
 &gt; We can't tell which OD- adjustment method to chose...
 
 Welcome to the wonderful world of Statistics. It's all shades of grey...
@@ -201,6 +574,72 @@ Welcome to the wonderful world of Statistics. It's all shades of grey...
 + Default assumptions for count data relate to Poisson and Binomial distributions, but these distributions have a very fixed expectation of the variance.
 
 + Real-world data is never as perfect as these distributions assume, so you usually underestimate the variance in your model, known as ___overdispersion___
+
++ If you can, get more data and inspect for aggregation, outlier etc.
+
++ Add more parameters if possible
+
++ Scale the variance simply with quasi models, or reporting dispersion ratio.
+
++ Other adjustment are all takes on the clustering / within and between variance concept.
+
++ Negative binomial is a good start, use random-intercept models if appropriate.
+
++ Post-hoc adjustment is ok, if you can't do it in the model.
+
+---
+class: references
+# References (1)
+
+Breslow, N. E. (1984). "Extra-Poisson Variation in Log-Linear Models".
+In: _Journal of the Royal Statistical Society. Series C (Applied
+Statistics)_ 33.1, pp. 38-44. ISSN: 00359254, 14679876. DOI:
+10.2307/2347661.
+
+Cameron, A. C. and P. K. Trivedi (2013). _Regression Analysis of Count
+Data_. Cambridge University Press. ISBN: 978-1-107-01416-9.
+
+DerSimonian, R. and N. Laird (1986). "Meta-Analysis in Clinical
+Trials". In: _Controlled Clinical Trials_ 7.3, pp. 177-88. ISSN:
+0197-2456 (Print) 0197-2456. DOI: 10.1016/0197-2456(86)90046-2.
+
+Efron, B. (1979). "Bootstrap Methods: Another Look at the Jackknife".
+In: _The Annals of Statistics_ 7.1, pp. 1-26. ISSN: 0090-5364. DOI:
+10.1214/aos/1176344552.
+
+Goldstein, H. (2010). _Multilevel Statistical Models_. John Wiley &amp;
+Sons Inc. ISBN: 978-0-470-97340-0.
+
+Hilbe, J. (2011). _Negative Binomial Regression_. Cambridge University
+Press. ISBN: 978-1-139-50006-7.
+&lt;https://books.google.co.uk/books?id=DDxEGQuqkJoC&gt;.
+
+Poisson, S. D. (1837). _Recherches Sur La Probabilité Des Jugements En
+Matière Criminelle et En Matière Civile: Précédées Des Règles Générales
+Du Calcul Des Probabilités_. Bachelier.
+
+Rabe-Hesketh, S. and A. Skrondal (2012). "Multilevel and Longitudinal
+Modeling Using Stata, Volumes I and II, Third Edition". In: 3rd. Taylor
+&amp; Francis. ISBN: 978-1-59718-108-2.
+
+Spiegelhalter, D. J. (2005). "Handling Over-Dispersion of Performance
+Indicators". In: _Quality and Safety in Health Care_ 14.5, pp. 347-351.
+DOI: 10.1136/qshc.2005.013755.
+
+Spiegelhalter, D., C. Sherlaw-Johnson, M. Bardsley, et al. (2012).
+"Statistical Methods for Healthcare Regulation: Rating, Screening and
+Surveillance". In: _Journal of the Royal Statistical Society: Series A
+(Statistics in Society)_ 175.1, pp. 1-47. ISSN: 09641998. DOI:
+10.1111/j.1467-985x.2011.01010.x.
+
+---
+class: references
+
+Spiegelhalter, D., C. Sherlaw-Johnson, M. Bardsley, et al. (2012).
+"Statistical Methods for Healthcare Regulation: Rating, Screening and
+Surveillance". In: _Journal of the Royal Statistical Society: Series A
+(Statistics in Society)_ 175.1, pp. 1-47. ISSN: 09641998. DOI:
+10.1111/j.1467-985x.2011.01010.x.
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>

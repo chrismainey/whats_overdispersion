@@ -3,6 +3,7 @@ title: "Overdispersion"
 author: 
   - "Chris Mainey"
 date: '`r Sys.Date()`'
+bibliography: "references.bib"
 output:
   xaringan::moon_reader:
     seal: false
@@ -18,6 +19,10 @@ output:
 ```{r setup, include=FALSE}
 library(ragg)
 library(tidyverse)
+library(broom)
+library(broom.mixed)
+library(RefManageR)
+library(citr)
 options(htmltools.dir.version = FALSE)
 knitr::opts_chunk$set(
   fig.width=9, fig.height=3.5, fig.retina=3,
@@ -29,6 +34,9 @@ knitr::opts_chunk$set(
   hiline = TRUE,
   dev = "ragg_png"
 )
+BibOptions(check.entries = FALSE, bib.style = "authoryear", style = "text")
+bib <- ReadBib("./references.bib", check = FALSE)
+ui <- "- "
 
 # Set up
 showtext::showtext_auto()
@@ -52,6 +60,10 @@ library(readr)
 library(tidyverse)
 library(FunnelPlotR)
 library(scales)
+library(COUNT)
+
+data("medpar")
+medpar$provnum <- factor(medpar$provnum)
 
 readmissions <- read_csv("I02040 Compendium Readmissions Dataset (Main) 2022(10).csv")
 
@@ -61,8 +73,46 @@ unique(readmissions$Level)
 sub<- readmissions %>%
   filter(`Period of coverage` == "01/04/2021 to 31/03/2022" &
            substring(Level,1,1) == "R" &
-           `Sex Breakdown` == "Persons") %>%
+           `Sex Breakdown` == "Persons" ) %>%
   mutate(Numerator = as.numeric(ifelse(Numerator == "*", floor(Expected), Numerator)))
+
+
+sub2<- readmissions %>%
+  filter( Year %in% c("2017/18","2018/19","2019/20")
+          & substring(Level,1,1) == "R" &
+           `Sex Breakdown` == "Persons" &
+            `Level description` %in% c("MANCHESTER UNIVERSITY NHS FOUNDATION TRUST","WORCESTERSHIRE HEALTH AND CARE NHS TRUST", 
+"BARTS HEALTH NHS TRUST", "UNIVERSITY HOSPITALS BRISTOL NHS FOUNDATION TRUST", "BRADFORD TEACHING HOSPITALS NHS FOUNDATION TRUST", "ROYAL FREE LONDON NHS FOUNDATION TRUST", "NORTH MIDDLESEX UNIVERSITY HOSPITAL NHS TRUST", "WIRRAL UNIVERSITY TEACHING HOSPITAL NHS FOUNDATION TRUST", "YORK TEACHING HOSPITAL NHS FOUNDATION TRUST", "HARROGATE AND DISTRICT NHS FOUNDATION TRUST", "MILTON KEYNES UNIVERSITY HOSPITAL NHS FOUNDATION TRUST", "FRIMLEY HEALTH NHS FOUNDATION TRUST",
+"BARNSLEY HOSPITAL NHS FOUNDATION TRUST", "CHESTERFIELD ROYAL HOSPITAL NHS FOUNDATION TRUST")) %>%
+  mutate(Numerator = as.numeric(ifelse(Numerator == "*", floor(Expected), Numerator)),
+         Denominator = as.numeric(Denominator),
+         Level = factor(Level))
+
+
+# model summary
+
+mod_summary <- function(model){
+  require(dplyr)
+  require(broom)
+  require(kableExtra)
+  
+  td_mod <- tidy(model, conf.int = TRUE, exponentiate = TRUE) %>% 
+  dplyr::select(-statistic)
+    
+   td_mod  %>% 
+   kable(digits = 2, format = 'html'
+         , col.names = c("Term"
+                         , "Estimate"
+                         , "Standard Error"
+                         , "p-value" 
+                         , "Lower"
+                         , "Upper")
+         , align = "c"
+         ) %>% 
+     kable_styling(position = "center") %>% 
+     add_header_above(header = c(" " = 4, "Confidence Interval"=2)) %>% 
+     row_spec(0, bold = T)
+}
 
 ```
 
@@ -70,11 +120,11 @@ sub<- readmissions %>%
 class: title-slide
 
 # Modelling count data:
-## What is overdispersion, and why you should care about it
+## What is overdispersion, and why should you care about it?
 
 
 
-<br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br>
 
 ### <img src="./assets/img/crop.png" alt="Mainard icon" height="40px" />  Dr Chris Mainey
 <br><br>
@@ -86,7 +136,7 @@ class: title-slide
 `r icons::icon_style(icons::fontawesome("orcid"), fill = "#005EB8")` [0000-0002-3018-6171](https://orcid.org/0000-0002-3018-6171)
 `r icons::icon_style(icons::fontawesome("globe"), fill = "#005EB8")` [www.mainard.co.uk](https://www.mainard.co.uk)
 
-.footnote[Presentation and code available: **https://github.com/chrismainey/BSICB_interview**]
+.footnote[Presentation and code available: **https://github.com/chrismainey/whats_overdispersion**]
 
 .art_cap[R generative art - inspired by Antonio Sánchez Chinchón - @aschinchon]
 
@@ -99,17 +149,19 @@ class: title-slide
 
 --
 
-Rabe-Hesketh & Skondral (2012) suggest that 
+ suggest that 
 
 >“Counts can be thought of as aggregated versions or summaries of more detailed data on the occurrences of some event.” 
 
-Two common sources (Cameron and Trivedi, 2013e):
+`r Citep(bib, "rabe-hesketh_multilevel_2012", .opts = list(cite.style = "authoryear", style="html", max.names=2, longnamesfirst = FALSE))`
+
+__Two common sources__ `r Citep(bib, "cameron_regression_2013", .opts = list(cite.style = "authoryear", style="html", max.names=2, longnamesfirst = FALSE))`:
 +  observation of point processes
 +  discretization of continuous outcomes 
 
 --
 
-Several properties:
+__Several properties:__
 
 + Natural, whole numbers (integers), sometimes referred to as ‘discrete.’ E.g. counts of 2 or 3 are possible, but 2.5 is not.
 
@@ -118,10 +170,41 @@ Several properties:
 + Counts occur in a fixed time period, with a known average rate (𝜇)
   + counts that occur with a variable time period can be characterised as rates using a time denominator
 
-+ Not normally distributed: Poisson.
++ Not normally distributed!
+
+---
+# Count data distributions: 
+
+.pull-left[
++ Default description is the Poisson distribution `r Citep(bib, c("poisson_recherches_1837", "cameron_regression_2013"), .opts = list(cite.style = "authoryear", style="html", max.names=2, longnamesfirst = FALSE))`.
+  + Not defined between integers
   + Counts with low average rates are noticeable skewed
   + Asymptotically normally distributed when average rate is high
+  + Single parameter $\lambda$ is both mean and variance
+  + Similar principle for binomial distribution, where variance: $np(1-p)$ is fixed by mean: $np$
+  + No free parameter to scale with the variance.
+  + Result is set variance that cannot alter in relation to data
+]
 
+.pull-right[
+```{r poisondistributions, echo=FALSE, fig.height=4, fig.width=4}
+example_pois<-
+  data.frame(
+    lambda = c(rep(1,30),rep(2,30),rep(3,30),rep(5,30),rep(10,30), rep(15,30)),
+    x = rep(seq(30), 6),
+    y = c(dpois(seq(30), lambda=1), dpois(seq(30), lambda=2), dpois(seq(30), lambda=3),
+          dpois(seq(30), lambda=5), dpois(seq(30), lambda=10), dpois(seq(30), lambda=15))
+)
+
+ggplot(example_pois, aes(y=y, x=x))+
+  geom_line(aes(col=factor(lambda)))+
+  #geom_area(aes(fill=factor(lambda), col=factor(lambda)), alpha=0.5)+
+  labs(title = "Density of Poisson Distribution", subtitle = "'lambda' = both mean and variance",
+       y = "Probablity Density", x = "Value", col = "Lambda", fill = "Lambda")+
+  scale_color_viridis_d(aesthetics = c("colour", "fill"))
+
+```
+]
 
 ---
 # Assumptions...
@@ -131,34 +214,52 @@ Several properties:
   
 + Same holds for proportions/ratio which are commonly truncated Poisson distributions
 
-+ Poisson assumptions commonly violated in, real world data (Breslow 184)
++ Poisson assumptions commonly violated in, real world data `r Citep(bib, "breslow_extra-poisson_1984", .opts = list(cite.style = "authoryear", style="html", max.names=2, longnamesfirst = FALSE))`
 
 ---
 # Example: Hospital Readmissions
 
-```{r nolimits}
+```{r nolimits, echo=FALSE, warning=FALSE}
 # No limits
 sub %>%
   group_by(Level, Trust=`Level description`) %>%
   summarise(Numerator = sum(Numerator),
             Expected = sum(Expected)) %>%
-  # ggplot(aes(y=Numerator/Expected, x = Expected))+
-  # geom_point() +
-  # geom_hline(yintercept = 1, colour = "red")+
-  # scale_y_continuous("Indirectly Standardised Readmission Ratio")+
-  # scale_x_continuous(labels = comma)+
   funnel_plot(Numerator,Expected, Trust, data_type = "SR"
               , draw_adjusted = FALSE
               , draw_unadjusted = FALSE
-             , title = "Readmissions 2021/22")
+             , title = "Readmissions 2021/22") %>% 
+  plot()
 
 ```
+source: [NHS Digital](https://digital.nhs.uk/data-and-information/publications/statistical/compendium-emergency-readmissions/current/specifications/emergency-readmissions-within-30-days-of-discharge-from-hospital_3#top)
 
-source: NHS
-
+```{r odtext, include=FALSE}
+a<-sub %>%
+  group_by(Level, Trust=`Level description`) %>%
+  summarise(Numerator = sum(Numerator),
+            Expected = sum(Expected)) %>%
+  funnel_plot(Numerator,Expected, Trust, data_type = "SR"
+              , draw_adjusted = TRUE
+              , draw_unadjusted = FALSE
+             , title = "Readmissions 2021/22")
+  phi(a)
+```
+__Dispersion Ratio of 86.40!__
+Error is actually 86 times larger than our simple models would assume.
 ---
-class: centre
+class: middle
 # Methods to deal with overdispersion
+
+
+_well, we need to be able to test for it first..._
+```{r disptest}
+# overdispersion test
+od_test<-function(model, ...){
+  sum(residuals(model, type="pearson")^2) / df.residual(model)
+}
+
+```
 
 ---
 
@@ -178,7 +279,19 @@ Depends on what you are trying to do:
 
 # 2. Get more information...
 
-Major causes of overdispersion are due to Poisson/Binomial models 
+Major causes of overdispersion are due to Poisson/Binomial models assumptions of the variance.
+
+If you can characterise it better, overdispersion should be lower:
+
+___Could examine:___
+
++ __Outliers:__  are there data points that are incorrect, incorrectly measured, from a different distribution?
+
++ __Aggregation:__ aggregating loses detail, can you alter the aggregation to add more detail to a model?
+
++ __Missing parameters:__ Is there more data that could help explain the variation?
+
++ __Poorly specified model components:__ Check whether we parametrise the predictors appropriately: e.g age, age categories, spline of age
 
 ---
 
@@ -186,49 +299,192 @@ Major causes of overdispersion are due to Poisson/Binomial models
 
 Can apply computation methods to improve the accuracy, such as:
 
-+ Boostrapping (Efron, 1979): taking random samples of you data and iteratively refitting, averaging across.
++ Bootstrapping `r Citep(bib, "efron_bootstrap_1979", .opts = list(cite.style = "authoryear", style="html", max.names=2, longnamesfirst = FALSE))`: taking random samples of you data and iteratively refitting, averaging across.
 + Scale the variance in a model
 + Scale the variance 'post-hoc' (after calculation) 
 + Use mixture models
-+ Model known heirerachy e.g. clustering at trust level with random-intercept.
++ Model known hierarchy e.g. clustering at trust level with random-intercept.
 
+
+```{r base_model}
+library(COUNT)
+library(AER)
+data("medpar")
+base_model <- glm(los ~ hmo + died +  factor(type), data=medpar, family="poisson")
+od_test(base_model)
+```
+---
+
+# Model output:
+
+```{r poissonsummary}
+mod_summary(base_model)
+```
+
+### Keep an eye on those confidence intervals...
 
 ---
 
-# 3a. Scaling the variance: quasi-models
+# 3a. Scaling the variance: 'Robust' confidence intervals
+'Sandwich' estimators can be use to scale the standard error, e.g. `sandwich` package
+
+```{r sandwich1, eval=FALSE}
+library("sandwich")
+library("lmtest")
+
+tidy(coeftest(base_model, vcov = sandwich), conf.int = TRUE) 
+```
+
+```{r sandwich2, echo=FALSE}
+library("sandwich")
+library("lmtest")
+
+tidy(coeftest(base_model, vcov = sandwich), conf.int = TRUE) %>% 
+  dplyr::select(-statistic) %>% 
+   mutate(across(estimate:conf.high, exp)) %>% 
+   kable(digits = 2, format = 'html'
+         , col.names = c("Term"
+                         , "Estimate"
+                         , "Standard Error"
+                         , "p-value"
+                         , "Lower"
+                         , "Upper")
+         , align = "c"
+         ) %>%
+     kable_styling(position = "center") %>%
+     add_header_above(header = c(" " = 4, "Confidence Interval"=2)) %>%
+     row_spec(0, bold = T)
+
+```
+
+---
+# 3b scaleing variance: Quasi-likehood
++ More relaxed assumption allowing scaling.
++ Estimated with GEE instead of MLE, but lacks MLE for AIC of likelihood ratio tests
+
+```{r quasi}
+quasi_model <- glm(los ~ hmo + died +  factor(type), data=medpar, family="quasipoisson")
+od_test(quasi_model)
+```
+```{r quasi_sum}
+mod_summary(quasi_model)
+
+```
 
 ---
 
 # 3b. Mixture models
 
-Negative Binomial
++ We can use mixed distributions that allow us to retain Poisson but add another assumption in.
 
++ ___Negative Binomial___ `r Citep(bib, "hilbe2011negative", .opts = list(cite.style = "authoryear", style="html", max.names=2, longnamesfirst = FALSE))` Can be used as Poisson with addition gamma or normal distributed assumption (more on this with random effect...)
 
-Generalised Poisson
+```{r negbin}
+library(MASS)
+nb_model <- glm.nb(los ~ hmo + died +  factor(type), data=medpar)
+od_test(nb_model)
+```
 
-Conway-Maxwell Poisson
+```{r nb_sum}
+mod_summary(nb_model)
+```
 
 ---
 
+# Multi-level models
+`r Citep(bib, "goldstein_multilevel_2010", .opts = list(cite.style = "authoryear", style="html", max.names=2, longnamesfirst = FALSE))`
+
++ Sometimes we can't estimate the variance because it operates on more than one level.
++ We can adapt regressions to have both 'fixed-effects' (coefficient and variance) or random-effect (variance)
+
+--
+
+<br><br>
+## Hospital-level clustering
+
++ Regression makes assumption of independence, which is violated if there is clustering
++ E.g. are all patients unrelated, or are the patients of a particular organisations related?
++ Multiple samples at the same units (repeated measurements) is a similar concept: not independent.
++ We can allow a 'random-intercept' or cluster-specific mean, as well as a global intercept.
+
+As example, using readmissions from earlier (but not working):
+```{r lme2}
+library(lme4)
+random_int_model <- glmer(Numerator ~ (1|Level) + offset(log(Denominator)), data=sub2, family="poisson")
+```
+
+---
+
+# Random-intercept model
+
+```{r sjp}
+library(sjPlot)
+plot_model(random_int_model, type="re")
+```
+---
+
+# Post-hoc adjustment
+
++ Based on meta-analysis of trials `r Citep(bib, "dersimonian_meta-analysis_1986", .opts = list(cite.style = "authoryear", style="html", max.names=2, longnamesfirst = FALSE))`
++ Spiegelhalter showed how to apply them in hospital indicator context, including funnel plots  `r Citep(bib, c("spiegelhalter_statistical_2012", "spiegelhalterHandlingOverdispersionPerformance2005"), .opts = list(cite.style = "authoryear", style="html", max.names=2, longnamesfirst = FALSE))`
++ Essentially estimating the dispersion ratio and scaling based on it, the number of clusters and within-cluster variance.
++ Same assumption, and equivalent to random-intercept model
+
+
+### Taking the readmissions from the start:
+
+.pull-left[
+```{r funnelundjust, echo=FALSE, fig.height=3, fig.width=4}
+sub %>%
+  group_by(Level, Trust=`Level description`) %>%
+  summarise(Numerator = sum(Numerator),
+            Expected = sum(Expected)) %>%
+  funnel_plot(Numerator,Expected, Trust, data_type = "SR"
+              , draw_adjusted = FALSE
+              , draw_unadjusted = TRUE
+              , label = NA
+             , title = "Readmissions 2021/22") %>% 
+  plot()
+```
+]
+.pull-right[
+```{r funneladjust, echo=FALSE, fig.height=3, fig.width=4}
+sub %>%
+  group_by(Level, Trust=`Level description`) %>%
+  summarise(Numerator = sum(Numerator),
+            Expected = sum(Expected)) %>%
+  funnel_plot(Numerator,Expected, Trust, data_type = "SR"
+              , draw_adjusted = TRUE
+              , draw_unadjusted = FALSE
+              , label = NA
+             , title = "Readmissions 2021/22") %>% 
+  plot()
+```
+]
 ---
 # Common objections
 
+--
 > It's quite complicated.
 
-Yes, it can be.  Main point is that your model is likely being too optimistic about it's error and you will be falsley assured of something by using it.
+Yes, it can be.  Main point is that your model is likely being too optimistic about it's error and you will be falsely assured of something by using it.
 
+--
 > We prefer the normal limits, as we don't want to miss anything
 
 You can do, but your false positives are high.
 
+--
 > Doesn't look like much of a funnel anymore
 
 This is because the additive overdispersion component is very large and dominating the new control limit.  This is exactly _why_ you need to account for it.
 
+--
 > Isn't it just picking how many outliers I want?
 
 Well...sort of... yes.  If you have outliers, you investigate them first before changing the system.
 
+--
 > We can't tell which OD- adjustment method to chose...
 
 Welcome to the wonderful world of Statistics. It's all shades of grey...
@@ -242,3 +498,36 @@ Welcome to the wonderful world of Statistics. It's all shades of grey...
 + Default assumptions for count data relate to Poisson and Binomial distributions, but these distributions have a very fixed expectation of the variance.
 
 + Real-world data is never as perfect as these distributions assume, so you usually underestimate the variance in your model, known as ___overdispersion___
+
++ If you can, get more data and inspect for aggregation, outlier etc.
+
++ Add more parameters if possible
+
++ Scale the variance simply with quasi models, or reporting dispersion ratio.
+
++ Other adjustment are all takes on the clustering / within and between variance concept.
+
++ Negative binomial is a good start, use random-intercept models if appropriate.
+
++ Post-hoc adjustment is ok, if you can't do it in the model.
+
+---
+class: references
+# References (1)
+
+```{r, print_refs1, results='asis', echo=FALSE, warning=FALSE, message=FALSE}
+PrintBibliography(bib, start = 1, end = 10
+      ,.opts = list(check.entries = FALSE, 
+               style = "text", 
+               bib.style = "authoryear"))
+```
+
+---
+class: references
+
+```{r, print_refs2, results='asis', echo=FALSE, warning=FALSE, message=FALSE}
+PrintBibliography(bib, start = 11
+      ,.opts = list(check.entries = FALSE, 
+               style = "text", 
+               bib.style = "authoryear"))
+```
