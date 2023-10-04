@@ -147,10 +147,6 @@ class: title-slide
 
 # Count data
 
---
-
- suggest that 
-
 >“Counts can be thought of as aggregated versions or summaries of more detailed data on the occurrences of some event.” 
 
 `r Citep(bib, "rabe-hesketh_multilevel_2012", .opts = list(cite.style = "authoryear", style="html", max.names=2, longnamesfirst = FALSE))`
@@ -252,7 +248,7 @@ class: middle
 # Methods to deal with overdispersion
 
 
-_well, we need to be able to test for it first..._
+_well, we need to be able to test for it first..._  `r Citep(bib, "bolker_glmm_2018", .opts = list(cite.style = "authoryear", style="html", max.names=2, longnamesfirst = FALSE))`
 ```{r disptest}
 # overdispersion test
 od_test<-function(model, ...){
@@ -317,17 +313,20 @@ od_test(base_model)
 
 # Model output:
 
-```{r poissonsummary}
+<br><br>
+
+```{r poissonsummary, echo=FALSE}
 mod_summary(base_model)
 ```
 
+<br><br>
 ### Keep an eye on those confidence intervals...
 
 ---
 
 # 3a. Scaling the variance: 'Robust' confidence intervals
-'Sandwich' estimators can be use to scale the standard error, e.g. `sandwich` package
-
+'Sandwich' estimators can be use to scale the standard error, e.g. `sandwich` package `r Citep(bib, c("white_maximum_1982","huber_behavior_1967"), .opts = list(cite.style = "authoryear", style="html", max.names=2, longnamesfirst = FALSE))`  
+ 
 ```{r sandwich1, eval=FALSE}
 library("sandwich")
 library("lmtest")
@@ -358,15 +357,16 @@ tidy(coeftest(base_model, vcov = sandwich), conf.int = TRUE) %>%
 ```
 
 ---
-# 3b scaleing variance: Quasi-likehood
-+ More relaxed assumption allowing scaling.
+# 3b. Scaling the variance: Quasi-likehood 
++ More relaxed assumption allowing scaling. `r Citep(bib, "wedderburnQuasiLikelihoodFunctionsGeneralized1974", .opts = list(cite.style = "authoryear", style="html", max.names=2, longnamesfirst = FALSE))`  
++ Assumes variance is a multiple of mean `r Citep(bib, "ameron_model_2013", .opts = list(cite.style = "authoryear", style="html", max.names=2, longnamesfirst = FALSE))`
 + Estimated with GEE instead of MLE, but lacks MLE for AIC of likelihood ratio tests
 
 ```{r quasi}
 quasi_model <- glm(los ~ hmo + died +  factor(type), data=medpar, family="quasipoisson")
 od_test(quasi_model)
 ```
-```{r quasi_sum}
+```{r quasi_sum, echo=FALSE}
 mod_summary(quasi_model)
 
 ```
@@ -377,7 +377,7 @@ mod_summary(quasi_model)
 
 + We can use mixed distributions that allow us to retain Poisson but add another assumption in.
 
-+ ___Negative Binomial___ `r Citep(bib, "hilbe2011negative", .opts = list(cite.style = "authoryear", style="html", max.names=2, longnamesfirst = FALSE))` Can be used as Poisson with addition gamma or normal distributed assumption (more on this with random effect...)
++ ___Negative Binomial___ `r Citep(bib, "hilbe2011negative", .opts = list(cite.style = "authoryear", style="html", max.names=2, longnamesfirst = FALSE))` Can be used as Poisson with additional gamma or normal distributed assumption (more on this with random effect...)
 
 ```{r negbin}
 library(MASS)
@@ -385,7 +385,7 @@ nb_model <- glm.nb(los ~ hmo + died +  factor(type), data=medpar)
 od_test(nb_model)
 ```
 
-```{r nb_sum}
+```{r nb_sum, echo=FALSE}
 mod_summary(nb_model)
 ```
 
@@ -400,7 +400,7 @@ mod_summary(nb_model)
 --
 
 <br><br>
-## Hospital-level clustering
+## Example unity-level clustering
 
 + Regression makes assumption of independence, which is violated if there is clustering
 + E.g. are all patients unrelated, or are the patients of a particular organisations related?
@@ -412,6 +412,44 @@ As example, using readmissions from earlier (but not working):
 library(lme4)
 random_int_model <- glmer(Numerator ~ (1|Level) + offset(log(Denominator)), data=sub2, family="poisson")
 ```
+---
+# Random-intercept example
+
+<br><br>
+.pull-left[
+```{r rintexample1, echo=FALSE, fig.height=4, fig.width=6}
+set.seed(52)
+rint_dt <- data.frame(
+  group = factor(rep(c("A","B","C","D", "E", "F", "G", "H"), each = 20)),
+  x = rnorm(160, 150, 30),
+  int =  rep(c(55,38,32,26,20, 12, 7, 1), each = 20)
+)
+
+rint_dt$y <- 10+(1.6*rint_dt$x) + rint_dt$int + rnorm(160, 0, 5)
+
+ggplot(rint_dt, aes(x=x, y=y))+
+  #geom_point(aes(col = group)) + 
+  geom_point() + 
+  #geom_smooth(aes(col = group), method="lm", se = FALSE) +
+  geom_smooth(method="lm", se = FALSE, col = "red")
+        
+```
+]
+
+--
+
+.pull-right[
+```{r rintexample2, echo=FALSE, fig.height=4, fig.width=6}
+ggplot(rint_dt, aes(x=x, y=y))+
+  geom_point(aes(col = group)) + 
+  #geom_point() + 
+  geom_smooth(aes(col = group), method="lm", se = FALSE) +
+  geom_smooth(method="lm", se = FALSE, col = "red", alpha=0.2) +
+  scale_colour_viridis_d()
+        
+```
+
+]
 
 ---
 
@@ -426,12 +464,11 @@ plot_model(random_int_model, type="re")
 # Post-hoc adjustment
 
 + Based on meta-analysis of trials `r Citep(bib, "dersimonian_meta-analysis_1986", .opts = list(cite.style = "authoryear", style="html", max.names=2, longnamesfirst = FALSE))`
-+ Spiegelhalter showed how to apply them in hospital indicator context, including funnel plots  `r Citep(bib, c("spiegelhalter_statistical_2012", "spiegelhalterHandlingOverdispersionPerformance2005"), .opts = list(cite.style = "authoryear", style="html", max.names=2, longnamesfirst = FALSE))`
++ Spiegelhalter showed how to apply them in healthcare, including funnel plots  `r Citep(bib, c("spiegelhalter_statistical_2012", "spiegelhalterHandlingOverdispersionPerformance2005"), .opts = list(cite.style = "authoryear", style="html", max.names=2, longnamesfirst = FALSE))`
 + Essentially estimating the dispersion ratio and scaling based on it, the number of clusters and within-cluster variance.
 + Same assumption, and equivalent to random-intercept model
 
-
-### Taking the readmissions from the start:
+--
 
 .pull-left[
 ```{r funnelundjust, echo=FALSE, fig.height=3, fig.width=4}
@@ -477,14 +514,15 @@ You can do, but your false positives are high.
 --
 > Doesn't look like much of a funnel anymore
 
-This is because the additive overdispersion component is very large and dominating the new control limit.  This is exactly _why_ you need to account for it.
+This is because the additive overdispersion component is very large and dominating the new control limit.  This is exactly ___why___ you need to account for it.
 
 --
 > Isn't it just picking how many outliers I want?
 
-Well...sort of... yes.  If you have outliers, you investigate them first before changing the system.
+Well...sort of... yes.  If you have outliers, you investigate them first before changing the system.  Wider philosophical problem with outlier investigation though...
 
 --
+
 > We can't tell which OD- adjustment method to chose...
 
 Welcome to the wonderful world of Statistics. It's all shades of grey...
@@ -497,26 +535,34 @@ Welcome to the wonderful world of Statistics. It's all shades of grey...
 
 + Default assumptions for count data relate to Poisson and Binomial distributions, but these distributions have a very fixed expectation of the variance.
 
+--
+
 + Real-world data is never as perfect as these distributions assume, so you usually underestimate the variance in your model, known as ___overdispersion___
 
-+ If you can, get more data and inspect for aggregation, outlier etc.
+--
 
-+ Add more parameters if possible
++ If you can:
+  + Get more data and inspect for aggregation, outlier etc.
+  + Add more parameters if possible
 
-+ Scale the variance simply with quasi models, or reporting dispersion ratio.
++ You can scale the variance simply with quasi-models, or simply report dispersion ratio.
 
-+ Other adjustment are all takes on the clustering / within and between variance concept.
++ Other adjustment are all takes on the clustering / 'within and between' variance concepts.
 
 + Negative binomial is a good start, use random-intercept models if appropriate.
 
 + Post-hoc adjustment is ok, if you can't do it in the model.
+
+--
+
+> If you know something is wrong, do you still report it?
 
 ---
 class: references
 # References (1)
 
 ```{r, print_refs1, results='asis', echo=FALSE, warning=FALSE, message=FALSE}
-PrintBibliography(bib, start = 1, end = 10
+PrintBibliography(bib, start = 1, end = 9
       ,.opts = list(check.entries = FALSE, 
                style = "text", 
                bib.style = "authoryear"))
@@ -524,10 +570,12 @@ PrintBibliography(bib, start = 1, end = 10
 
 ---
 class: references
+# References (2)
 
 ```{r, print_refs2, results='asis', echo=FALSE, warning=FALSE, message=FALSE}
-PrintBibliography(bib, start = 11
+PrintBibliography(bib, start = 10
       ,.opts = list(check.entries = FALSE, 
                style = "text", 
                bib.style = "authoryear"))
 ```
+

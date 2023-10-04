@@ -4,7 +4,7 @@
     <title>Overdispersion</title>
     <meta charset="utf-8" />
     <meta name="author" content="Chris Mainey" />
-    <meta name="date" content="2023-09-30" />
+    <meta name="date" content="2023-10-04" />
     <script src="presentation_files/header-attrs/header-attrs.js"></script>
     <script src="presentation_files/kePrint/kePrint.js"></script>
     <link href="presentation_files/lightable/lightable.css" rel="stylesheet" />
@@ -47,15 +47,11 @@ class: title-slide
 
 # Count data
 
---
-
- suggest that 
-
 &gt;“Counts can be thought of as aggregated versions or summaries of more detailed data on the occurrences of some event.” 
 
 &lt;a id='cite-rabe-hesketh_multilevel_2012'&gt;&lt;/a&gt;(&lt;a href='#bib-rabe-hesketh_multilevel_2012'&gt;Rabe-Hesketh and Skrondal, 2012&lt;/a&gt;)
 
-__Two common sources__ &lt;a id='cite-cameron_regression_2013'&gt;&lt;/a&gt;(&lt;a href='#bib-cameron_regression_2013'&gt;Cameron and Trivedi, 2013&lt;/a&gt;):
+__Two common sources__ &lt;a id='cite-cameron_regression_2013'&gt;&lt;/a&gt;(&lt;a href='#bib-cameron_regression_2013'&gt;Cameron and Trivedi, 2013b&lt;/a&gt;):
 +  observation of point processes
 +  discretization of continuous outcomes 
 
@@ -76,7 +72,7 @@ __Several properties:__
 # Count data distributions: 
 
 .pull-left[
-+ Default description is the Poisson distribution &lt;a id='cite-poisson_recherches_1837'&gt;&lt;/a&gt;(&lt;a href='#bib-poisson_recherches_1837'&gt;Poisson, 1837&lt;/a&gt;; &lt;a href='#bib-cameron_regression_2013'&gt;Cameron and Trivedi, 2013&lt;/a&gt;).
++ Default description is the Poisson distribution &lt;a id='cite-poisson_recherches_1837'&gt;&lt;/a&gt;(&lt;a href='#bib-poisson_recherches_1837'&gt;Poisson, 1837&lt;/a&gt;; &lt;a href='#bib-cameron_regression_2013'&gt;Cameron and Trivedi, 2013b&lt;/a&gt;).
   + Not defined between integers
   + Counts with low average rates are noticeable skewed
   + Asymptotically normally distributed when average rate is high
@@ -114,7 +110,7 @@ class: middle
 # Methods to deal with overdispersion
 
 
-_well, we need to be able to test for it first..._
+_well, we need to be able to test for it first..._  &lt;a id='cite-bolker_glmm_2018'&gt;&lt;/a&gt;(&lt;a href='#bib-bolker_glmm_2018'&gt;Bolker, 2018&lt;/a&gt;)
 
 ```r
 # overdispersion test
@@ -184,10 +180,7 @@ od_test(base_model)
 
 # Model output:
 
-
-```r
-mod_summary(base_model)
-```
+&lt;br&gt;&lt;br&gt;
 
 &lt;table class="table" style="margin-left: auto; margin-right: auto;"&gt;
  &lt;thead&gt;
@@ -248,13 +241,14 @@ mod_summary(base_model)
 &lt;/tbody&gt;
 &lt;/table&gt;
 
+&lt;br&gt;&lt;br&gt;
 ### Keep an eye on those confidence intervals...
 
 ---
 
 # 3a. Scaling the variance: 'Robust' confidence intervals
-'Sandwich' estimators can be use to scale the standard error, e.g. `sandwich` package
-
+'Sandwich' estimators can be use to scale the standard error, e.g. `sandwich` package &lt;a id='cite-white_maximum_1982'&gt;&lt;/a&gt;&lt;a id='cite-huber_behavior_1967'&gt;&lt;/a&gt;(&lt;a href='#bib-white_maximum_1982'&gt;White, 1982&lt;/a&gt;; &lt;a href='#bib-huber_behavior_1967'&gt;Huber, 1967&lt;/a&gt;)  
+ 
 
 ```r
 library("sandwich")
@@ -323,8 +317,9 @@ tidy(coeftest(base_model, vcov = sandwich), conf.int = TRUE)
 &lt;/table&gt;
 
 ---
-# 3b scaleing variance: Quasi-likehood
-+ More relaxed assumption allowing scaling.
+# 3b. Scaling the variance: Quasi-likehood 
++ More relaxed assumption allowing scaling. &lt;a id='cite-wedderburnQuasiLikelihoodFunctionsGeneralized1974'&gt;&lt;/a&gt;(&lt;a href='https://doi.org/10.2307/2334725'&gt;Wedderburn, 1974&lt;/a&gt;)  
++ Assumes variance is a multiple of mean 
 + Estimated with GEE instead of MLE, but lacks MLE for AIC of likelihood ratio tests
 
 
@@ -336,11 +331,6 @@ od_test(quasi_model)
 ```
 ## [1] 6.241336
 ```
-
-```r
-mod_summary(quasi_model)
-```
-
 &lt;table class="table" style="margin-left: auto; margin-right: auto;"&gt;
  &lt;thead&gt;
 &lt;tr&gt;
@@ -406,7 +396,7 @@ mod_summary(quasi_model)
 
 + We can use mixed distributions that allow us to retain Poisson but add another assumption in.
 
-+ ___Negative Binomial___ &lt;a id='cite-hilbe2011negative'&gt;&lt;/a&gt;(&lt;a href='https://books.google.co.uk/books?id=DDxEGQuqkJoC'&gt;Hilbe, 2011&lt;/a&gt;) Can be used as Poisson with addition gamma or normal distributed assumption (more on this with random effect...)
++ ___Negative Binomial___ &lt;a id='cite-hilbe2011negative'&gt;&lt;/a&gt;(&lt;a href='https://books.google.co.uk/books?id=DDxEGQuqkJoC'&gt;Hilbe, 2011&lt;/a&gt;) Can be used as Poisson with additional gamma or normal distributed assumption (more on this with random effect...)
 
 
 ```r
@@ -417,11 +407,6 @@ od_test(nb_model)
 
 ```
 ## [1] 1.133281
-```
-
-
-```r
-mod_summary(nb_model)
 ```
 
 &lt;table class="table" style="margin-left: auto; margin-right: auto;"&gt;
@@ -494,7 +479,7 @@ mod_summary(nb_model)
 --
 
 &lt;br&gt;&lt;br&gt;
-## Hospital-level clustering
+## Example unity-level clustering
 
 + Regression makes assumption of independence, which is violated if there is clustering
 + E.g. are all patients unrelated, or are the patients of a particular organisations related?
@@ -507,6 +492,20 @@ As example, using readmissions from earlier (but not working):
 library(lme4)
 random_int_model &lt;- glmer(Numerator ~ (1|Level) + offset(log(Denominator)), data=sub2, family="poisson")
 ```
+---
+# Random-intercept example
+
+&lt;br&gt;&lt;br&gt;
+.pull-left[
+&lt;img src="presentation_files/figure-html/rintexample1-1.png" width="100%" /&gt;
+]
+
+--
+
+.pull-right[
+&lt;img src="presentation_files/figure-html/rintexample2-1.png" width="100%" /&gt;
+
+]
 
 ---
 
@@ -524,12 +523,11 @@ plot_model(random_int_model, type="re")
 # Post-hoc adjustment
 
 + Based on meta-analysis of trials &lt;a id='cite-dersimonian_meta-analysis_1986'&gt;&lt;/a&gt;(&lt;a href='https://doi.org/10.1016/0197-2456(86)90046-2'&gt;DerSimonian and Laird, 1986&lt;/a&gt;)
-+ Spiegelhalter showed how to apply them in hospital indicator context, including funnel plots  &lt;a id='cite-spiegelhalter_statistical_2012'&gt;&lt;/a&gt;&lt;a id='cite-spiegelhalterHandlingOverdispersionPerformance2005'&gt;&lt;/a&gt;(&lt;a href='https://doi.org/10.1111/j.1467-985x.2011.01010.x'&gt;Spiegelhalter Sherlaw-Johnson et al., 2012&lt;/a&gt;; &lt;a href='https://doi.org/10.1136/qshc.2005.013755'&gt;Spiegelhalter, 2005&lt;/a&gt;)
++ Spiegelhalter showed how to apply them in healthcare, including funnel plots  &lt;a id='cite-spiegelhalter_statistical_2012'&gt;&lt;/a&gt;&lt;a id='cite-spiegelhalterHandlingOverdispersionPerformance2005'&gt;&lt;/a&gt;(&lt;a href='https://doi.org/10.1111/j.1467-985x.2011.01010.x'&gt;Spiegelhalter Sherlaw-Johnson et al., 2012&lt;/a&gt;; &lt;a href='https://doi.org/10.1136/qshc.2005.013755'&gt;Spiegelhalter, 2005&lt;/a&gt;)
 + Essentially estimating the dispersion ratio and scaling based on it, the number of clusters and within-cluster variance.
 + Same assumption, and equivalent to random-intercept model
 
-
-### Taking the readmissions from the start:
+--
 
 .pull-left[
 &lt;img src="presentation_files/figure-html/funnelundjust-1.png" width="100%" /&gt;
@@ -553,14 +551,15 @@ You can do, but your false positives are high.
 --
 &gt; Doesn't look like much of a funnel anymore
 
-This is because the additive overdispersion component is very large and dominating the new control limit.  This is exactly _why_ you need to account for it.
+This is because the additive overdispersion component is very large and dominating the new control limit.  This is exactly ___why___ you need to account for it.
 
 --
 &gt; Isn't it just picking how many outliers I want?
 
-Well...sort of... yes.  If you have outliers, you investigate them first before changing the system.
+Well...sort of... yes.  If you have outliers, you investigate them first before changing the system.  Wider philosophical problem with outlier investigation though...
 
 --
+
 &gt; We can't tell which OD- adjustment method to chose...
 
 Welcome to the wonderful world of Statistics. It's all shades of grey...
@@ -573,30 +572,40 @@ Welcome to the wonderful world of Statistics. It's all shades of grey...
 
 + Default assumptions for count data relate to Poisson and Binomial distributions, but these distributions have a very fixed expectation of the variance.
 
+--
+
 + Real-world data is never as perfect as these distributions assume, so you usually underestimate the variance in your model, known as ___overdispersion___
 
-+ If you can, get more data and inspect for aggregation, outlier etc.
+--
 
-+ Add more parameters if possible
++ If you can:
+  + Get more data and inspect for aggregation, outlier etc.
+  + Add more parameters if possible
 
-+ Scale the variance simply with quasi models, or reporting dispersion ratio.
++ You can scale the variance simply with quasi-models, or simply report dispersion ratio.
 
-+ Other adjustment are all takes on the clustering / within and between variance concept.
++ Other adjustment are all takes on the clustering / 'within and between' variance concepts.
 
 + Negative binomial is a good start, use random-intercept models if appropriate.
 
 + Post-hoc adjustment is ok, if you can't do it in the model.
 
+--
+
+&gt; If you know something is wrong, do you still report it?
+
 ---
 class: references
 # References (1)
+
+Bolker, B. M. (2018). _GLMM FAQ_.
 
 Breslow, N. E. (1984). "Extra-Poisson Variation in Log-Linear Models".
 In: _Journal of the Royal Statistical Society. Series C (Applied
 Statistics)_ 33.1, pp. 38-44. ISSN: 00359254, 14679876. DOI:
 10.2307/2347661.
 
-Cameron, A. C. and P. K. Trivedi (2013). _Regression Analysis of Count
+Cameron, A. C. and P. K. Trivedi (2013b). _Regression Analysis of Count
 Data_. Cambridge University Press. ISBN: 978-1-107-01416-9.
 
 DerSimonian, R. and N. Laird (1986). "Meta-Analysis in Clinical
@@ -614,9 +623,20 @@ Hilbe, J. (2011). _Negative Binomial Regression_. Cambridge University
 Press. ISBN: 978-1-139-50006-7.
 &lt;https://books.google.co.uk/books?id=DDxEGQuqkJoC&gt;.
 
+Huber, P. J. (1967). "The Behavior of Maximum Likelihood Estimates
+under Nonstandard Conditions". In: Proceedings of the Fifth Berkeley
+Symposium on Mathematical Statistics and Probability, Volume 1:
+Statistics. Fifth Berkeley Symposium on Mathematical Statistics and
+Probability. University of California Press, pp. 221-233. ISBN:
+0097-0433.
+
 Poisson, S. D. (1837). _Recherches Sur La Probabilité Des Jugements En
 Matière Criminelle et En Matière Civile: Précédées Des Règles Générales
 Du Calcul Des Probabilités_. Bachelier.
+
+---
+class: references
+# References (2)
 
 Rabe-Hesketh, S. and A. Skrondal (2012). "Multilevel and Longitudinal
 Modeling Using Stata, Volumes I and II, Third Edition". In: 3rd. Taylor
@@ -632,14 +652,13 @@ Surveillance". In: _Journal of the Royal Statistical Society: Series A
 (Statistics in Society)_ 175.1, pp. 1-47. ISSN: 09641998. DOI:
 10.1111/j.1467-985x.2011.01010.x.
 
----
-class: references
+Wedderburn, R. W. M. (1974). "Quasi-Likelihood Functions, Generalized
+Linear Models, and the Gauss-Newton Method". In: _Biometrika_ 61.3, pp.
+439-447. ISSN: 00063444. DOI: 10.2307/2334725.
 
-Spiegelhalter, D., C. Sherlaw-Johnson, M. Bardsley, et al. (2012).
-"Statistical Methods for Healthcare Regulation: Rating, Screening and
-Surveillance". In: _Journal of the Royal Statistical Society: Series A
-(Statistics in Society)_ 175.1, pp. 1-47. ISSN: 09641998. DOI:
-10.1111/j.1467-985x.2011.01010.x.
+White, H. (1982). "Maximum Likelihood Estimation of Misspecified
+Models". In: _Econometrica_ 50.1, pp. 1-25.
+
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
