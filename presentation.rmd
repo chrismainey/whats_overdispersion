@@ -124,13 +124,12 @@ class: title-slide
 
 
 
-<br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br><br><br>
 
 ### <img src="./assets/img/crop.png" alt="Mainard icon" height="40px" />  Dr Chris Mainey
 <br><br>
 
-`r icons::icon_style(icons::fontawesome("envelope"), fill = "#005EB8")` [c.mainey@nhs.net](mailto:c.mainey@nhs.net)
-`r icons::icon_style(icons::fontawesome("twitter"), fill = "#005EB8")` [@chrismainey](https://twitter.com/chrismainey)
+`r icons::icon_style(icons::fontawesome("envelope"), fill = "#005EB8")` [c.mainey1@nhs.net](mailto:c.mainey1@nhs.net)
 `r icons::icon_style(icons::fontawesome("github"), fill = "#005EB8")` [chrismainey](https://github.com/chrismainey)
 `r icons::icon_style(icons::fontawesome("linkedin"), fill = "#005EB8")`  [chrismainey](https://www.linkedin.com/in/chrismainey/)
 `r icons::icon_style(icons::fontawesome("orcid"), fill = "#005EB8")` [0000-0002-3018-6171](https://orcid.org/0000-0002-3018-6171)
@@ -173,13 +172,17 @@ __Several properties:__
 
 .pull-left[
 + Default description is the Poisson distribution `r Citep(bib, c("poisson_recherches_1837", "cameron_regression_2013"), .opts = list(cite.style = "authoryear", style="html", max.names=2, longnamesfirst = FALSE))`.
+  
   + Not defined between integers
-  + Counts with low average rates are noticeable skewed
+  + Counts with low average rates are skewed
   + Asymptotically normally distributed when average rate is high
   + Single parameter $\lambda$ is both mean and variance
-  + Similar principle for binomial distribution, where variance: $np(1-p)$ is fixed by mean: $np$
-  + No free parameter to scale with the variance.
-  + Result is set variance that cannot alter in relation to data
+  + __No free parameter to scale with the variance.__
+
+
+{{content}}
+
+
 ]
 
 .pull-right[
@@ -202,15 +205,36 @@ ggplot(example_pois, aes(y=y, x=x))+
 ```
 ]
 
+--
+___Result is set variance that cannot alter in relation to data___
+
+{{content}}
+
+--
+
+Similar principle for binomial distribution, where variance: $np(1-p)$ is fixed by mean: $np$
+
 ---
+
 # Assumptions...
 
-+ Even if you don't know you are doing it, using counts are simple Poisson models:
-  + Characterised by it's average rate
++ Even if you don't know you are doing it, using count data many cases, is simple Poisson models:
+  + Characterised by it's average rate: $\lambda$
   
-+ Same holds for proportions/ratio which are commonly truncated Poisson distributions
++ Same idea is true for proportions/ratios which are commonly truncated Poisson distributions
 
 + Poisson assumptions commonly violated in, real world data `r Citep(bib, "breslow_extra-poisson_1984", .opts = list(cite.style = "authoryear", style="html", max.names=2, longnamesfirst = FALSE))`
+
+--
+<br><br>
+
+### Leading to:
+
+> Overdispersion: where the conditional variance is greater than the conditional mean
+
++ More variance in the data than we expect in the Poisson distribution
++ Error estimate is too small
++ Confidence Intervals, and usual assumption of precision of estimate are too narrow/small
 
 ---
 # Example: Hospital Readmissions
@@ -223,8 +247,9 @@ sub %>%
             Expected = sum(Expected)) %>%
   funnel_plot(Numerator,Expected, Trust, data_type = "SR"
               , draw_adjusted = FALSE
-              , draw_unadjusted = FALSE
-             , title = "Readmissions 2021/22") %>% 
+              , draw_unadjusted = TRUE
+             , title = "Readmissions 2021/22"
+             , label = NA) %>% 
   plot()
 
 ```
@@ -360,7 +385,7 @@ tidy(coeftest(base_model, vcov = sandwich), conf.int = TRUE) %>%
 # 3b. Scaling the variance: Quasi-likehood 
 + More relaxed assumption allowing scaling. `r Citep(bib, "wedderburnQuasiLikelihoodFunctionsGeneralized1974", .opts = list(cite.style = "authoryear", style="html", max.names=2, longnamesfirst = FALSE))`  
 + Assumes variance is a multiple of mean `r Citep(bib, "ameron_model_2013", .opts = list(cite.style = "authoryear", style="html", max.names=2, longnamesfirst = FALSE))`
-+ Estimated with GEE instead of MLE, but lacks MLE for AIC of likelihood ratio tests
++ Estimated with GEE instead of MLE, but lacks MLE for AIC or likelihood ratio tests
 
 ```{r quasi}
 quasi_model <- glm(los ~ hmo + died +  factor(type), data=medpar, family="quasipoisson")
